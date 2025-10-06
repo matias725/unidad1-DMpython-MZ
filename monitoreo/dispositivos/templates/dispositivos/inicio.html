@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Página de Inicio</title>
+</head>
+<body>
+    <h1>Bienvenido a la página de inicio</h1>
+    <p>Esto viene de <code>dispositivos/inicio.html</code></p>
+
+    <a href="{% url 'dashboard' %}">Ir al panel de dispositivos</a>
+
+    <h2>Lista de Dispositivos</h2>
+    <ul>
+        {% for d in dispositivos %}
+            <li>
+                <a href="{% url 'detalle_dispositivo' d.id %}">{{ d.nombre }}</a>
+            </li>
+        {% empty %}
+            <li>No hay dispositivos registrados</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

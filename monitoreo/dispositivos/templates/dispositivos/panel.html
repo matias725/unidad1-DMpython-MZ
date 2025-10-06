@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_dispositivos' %}">Dispositivos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_mediciones' %}">Mediciones</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="container">
+        <div class="row g-4 mb-4">
+
+            <!-- Dispositivos por Zona -->
+            <div class="col-md-4">
+                <div class="card text-white bg-primary h-100">
+                    <div class="card-header">Dispositivos por Zona</div>
+                    <div class="card-body">
+                        {% for zona in zonas %}
+                            <p>{{ zona.nombre }}: {{ zona.num_dispositivos }} dispositivos</p>
+                        {% empty %}
+                            <p>No hay zonas registradas.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mediciones Recientes -->
+            <div class="col-md-4">
+                <div class="card text-white bg-success h-100">
+                    <div class="card-header">Últimas Mediciones</div>
+                    <div class="card-body">
+                        {% for medicion in mediciones %}
+                            <p>{{ medicion.dispositivo.nombre }}: {{ medicion.consumo }} kWh ({{ medicion.fecha|date:"d/m/Y H:i" }})</p>
+                        {% empty %}
+                            <p>No hay mediciones registradas.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas Graves -->
+            <div class="col-md-4">
+                <div class="card text-white bg-danger h-100">
+                    <div class="card-header">Alertas Graves</div>
+                    <div class="card-body">
+                        {% for alerta in alertas_grave %}
+                            <p>{{ alerta.dispositivo.nombre }} - {{ alerta.mensaje }}</p>
+                        {% empty %}
+                            <p>No hay alertas graves.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas Altas y Medias -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card bg-warning h-100">
+                    <div class="card-header">Alertas Altas</div>
+                    <div class="card-body">
+                        {% for alerta in alertas_alta %}
+                            <p>{{ alerta.dispositivo.nombre }} - {{ alerta.mensaje }}</p>
+                        {% empty %}
+                            <p>No hay alertas altas.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card bg-info h-100 text-white">
+                    <div class="card-header">Alertas Medias</div>
+                    <div class="card-body">
+                        {% for alerta in alertas_media %}
+                            <p>{{ alerta.dispositivo.nombre }} - {{ alerta.mensaje }}</p>
+                        {% empty %}
+                            <p>No hay alertas medias.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

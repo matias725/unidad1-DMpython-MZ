@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Detalle Dispositivo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Detalle del Dispositivo</h1>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <p><strong>Nombre:</strong> {{ dispositivo.nombre }}</p>
+            <p><strong>Categoría:</strong> {{ dispositivo.categoria }}</p>
+            <p><strong>Zona:</strong>
+                {% if dispositivo.zona %}
+                    {{ dispositivo.zona.nombre }}
+                {% else %}
+                    Sin zona
+                {% endif %}
+            </p>
+            <p><strong>Consumo Nominal (W):</strong> {{ dispositivo.watts }}</p>
+        </div>
+    </div>
+
+    <h3 class="mt-4">Mediciones</h3>
+    <ul class="list-group">
+        {% for medicion in mediciones %}
+            <li class="list-group-item">
+                {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
+            </li>
+        {% empty %}
+            <li class="list-group-item">No hay mediciones registradas.</li>
+        {% endfor %}
+    </ul>
+
+    <h3 class="mt-4">Alertas Graves</h3>
+    <ul class="list-group">
+        {% for medicion in alertas_grave %}
+            <li class="list-group-item">
+                {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
+            </li>
+        {% empty %}
+            <li class="list-group-item">No hay alertas graves.</li>
+        {% endfor %}
+    </ul>
+
+    <h3 class="mt-4">Alertas Altas</h3>
+    <ul class="list-group">
+        {% for medicion in alertas_alta %}
+            <li class="list-group-item">
+                {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
+            </li>
+        {% empty %}
+            <li class="list-group-item">No hay alertas altas.</li>
+        {% endfor %}
+    </ul>
+
+    <h3 class="mt-4">Alertas Medias</h3>
+    <ul class="list-group">
+        {% for medicion in alertas_media %}
+            <li class="list-group-item">
+                {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
+            </li>
+        {% empty %}
+            <li class="list-group-item">No hay alertas medias.</li>
+        {% endfor %}
+    </ul>
+
+    <div class="mt-4">
+        <a href="{% url 'listar_dispositivos' %}" class="btn btn-secondary">Volver a Dispositivos</a>
+        <a href="{% url 'editar_dispositivo' dispositivo.id %}" class="btn btn-warning">Editar</a>
+        <a href="{% url 'eliminar_dispositivo' dispositivo.id %}" class="btn btn-danger">Eliminar</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

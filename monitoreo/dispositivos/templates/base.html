@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Mi Proyecto{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <h1>Sistema de Monitoreo</h1>
+        <nav>
+            <a href="{% url 'inicio' %}">Inicio</a> |
+            <a href="{% url 'dashboard' %}">Dashboard</a> |
+            <a href="{% url 'listar_dispositivos' %}">Dispositivos</a> |
+            <a href="{% url 'listar_mediciones' %}">Mediciones</a> |
+            <a href="{% url 'registro_empresa' %}">Registro</a>
+        </nav>
+        <hr>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <hr>
+        <p>© 2025 - Proyecto de Monitoreo</p>
+    </footer>
+</body>
+</html>

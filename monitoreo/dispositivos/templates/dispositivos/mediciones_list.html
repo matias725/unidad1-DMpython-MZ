@@ -1,0 +1,37 @@
+<!-- dispositivos/templates/dispositivos/mediciones_list.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Mediciones</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Mediciones</h1>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Dispositivo</th>
+                    <th>Consumo (kWh)</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medicion in mediciones %}
+                <tr>
+                    <td>{{ medicion.dispositivo.nombre }}</td>
+                    <td>{{ medicion.consumo }}</td>
+                    <td>{{ medicion.fecha|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No hay mediciones registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Volver al Dashboard</a>
+    </div>
+</body>
+</html>

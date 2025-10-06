@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dispositivo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1em;}
+        th, td { padding: 0.75em; border-bottom: 1px solid #eee; text-align: left;}
+        th { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Información del Dispositivo</h1>
+        <table>
+            <tr>
+                <th>Nombre</th>
+                <td>{{ dispositivo.nombre }}</td>
+            </tr>
+            <tr>
+                <th>Consumo (W)</th>
+                <td>{{ dispositivo.consumo }} W</td>
+            </tr>
+            <tr>
+                ir a <a href="/">Inicio</a>
+            </tr>
+        
+    </div>
+</body>
+</html>
