@@ -1,3 +1,6 @@
+{% comment %}
+Archivo: dispositivos/templates/base.html (Actualizado)
+{% endcomment %}
 
 <html lang="es">
 <head>
@@ -5,9 +8,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'dashboard' %}">Dashboard</a>
@@ -15,18 +19,40 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_dispositivos' %}">Dispositivos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_mediciones' %}">Mediciones</a></li>
+                    
+                    {% if perms.dispositivos.view_dispositivo %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_dispositivos' %}">Dispositivos</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.dispositivos.view_medicion %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_mediciones' %}">Mediciones</a>
+                    </li>
+                    {% endif %}
                 </ul>
+                
                 <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a></li>
+                    <li class="nav-item">
+                        <span class="navbar-text me-3">
+                            {% if user.empresa %}
+                                {{ user.empresa.nombre }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <div class="container">
         {% block content %}
 
@@ -36,4 +62,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
