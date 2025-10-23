@@ -23,15 +23,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # App principal
-    path('', views.inicio, name='inicio'),  # página principal
+    #path('', views.inicio, name='inicio'),  # página principal
     path('registro/', views.registro_empresa, name='registro_empresa'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dispositivos/', include('dispositivos.urls')),  # todas las rutas de dispositivos
 
     # Login / Logout
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
-
+    path('', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login', http_method_names=['get', 'post', 'options']), name='logout'),
     # Reset de contraseña
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='registration/password_reset_form.html'), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),

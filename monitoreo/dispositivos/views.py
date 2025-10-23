@@ -1,7 +1,11 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+# 👇 ¡Importaciones añadidas para permisos y AJAX!
+from django.contrib.auth.decorators import login_required, permission_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+# 👆
 from django.db.models import Count
 
 from .forms import DispositivoForm, RegistroEmpresaForm
@@ -68,9 +72,10 @@ def registro_empresa(request):
 
 
 # ==========================
-# DISPOSITIVOS
+# DISPOSITIVOS (¡MODIFICADOS!)
 # ==========================
 @login_required
+@permission_required('dispositivos.view_dispositivo', raise_exception=True) # 👈 PROTEGIDO
 def listar_dispositivos(request):
     categoria = request.GET.get('categoria')
     dispositivos = Dispositivo.objects.all()
@@ -80,6 +85,7 @@ def listar_dispositivos(request):
 
 
 @login_required
+@permission_required('dispositivos.view_dispositivo', raise_exception=True) # 👈 PROTEGIDO
 def detalle_dispositivo(request, dispositivo_id):
     dispositivo = get_object_or_404(Dispositivo, id=dispositivo_id)
     mediciones = Medicion.objects.filter(dispositivo=dispositivo).order_by('-fecha')
@@ -106,6 +112,7 @@ def detalle_dispositivo(request, dispositivo_id):
 
 
 @login_required
+@permission_required('dispositivos.add_dispositivo', raise_exception=True) # 👈 PROTEGIDO
 def crear_dispositivo(request):
     if request.method == "POST":
         form = DispositivoForm(request.POST)
@@ -118,6 +125,7 @@ def crear_dispositivo(request):
 
 
 @login_required
+@permission_required('dispositivos.change_dispositivo', raise_exception=True) # 👈 PROTEGIDO
 def editar_dispositivo(request, dispositivo_id):
     dispositivo = get_object_or_404(Dispositivo, id=dispositivo_id)
     if request.method == "POST":
@@ -131,12 +139,17 @@ def editar_dispositivo(request, dispositivo_id):
 
 
 @login_required
+@permission_required('dispositivos.delete_dispositivo', raise_exception=True) # 👈 PROTEGIDO
+@require_POST # 👈 Solo permite POST
 def eliminar_dispositivo(request, dispositivo_id):
-    dispositivo = get_object_or_404(Dispositivo, id=dispositivo_id)
-    if request.method == "POST":
+    # Esta vista ahora devuelve JSON para AJAX
+    try:
+        dispositivo = get_object_or_404(Dispositivo, id=dispositivo_id)
+        nombre = dispositivo.nombre
         dispositivo.delete()
-        return redirect("listar_dispositivos")
-    return render(request, "dispositivos/dispositivo_confirm_delete.html", {"dispositivo": dispositivo})
+        return JsonResponse({"ok": True, "message": f"Dispositivo '{nombre}' eliminado"})
+    except Exception as e:
+        return JsonResponse({"ok": False, "message": str(e)}, status=400)
 
 
 # ==========================
@@ -167,13 +180,12 @@ def panel_consumo(request):
         "consumo_maximo": consumo_maximo
     })
 
-
+# ==========================
+# INICIO (¡LA FUNCIÓN QUE FALTABA!)
+# ==========================
 @login_required
 def inicio(request):
     dispositivos = Dispositivo.objects.all()
+    
     return render(request, "dispositivos/inicio.html", {"dispositivos": dispositivos})
-
-
-
-
 
