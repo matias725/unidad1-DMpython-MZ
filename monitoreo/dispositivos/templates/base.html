@@ -22,6 +22,12 @@ Archivo: dispositivos/templates/base.html (Actualizado)
                 
                 <ul class="navbar-nav me-auto">
                     
+                    {% if perms.dispositivos.view_zona %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_zonas' %}">Zonas</a>
+                    </li>
+                    {% endif %}
+                    
                     {% if perms.dispositivos.view_dispositivo %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'listar_dispositivos' %}">Dispositivos</a>

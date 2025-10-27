@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h2 class="mb-0">
+                    {% if zona %}
+                        Editar Zona: {{ zona.nombre }}
+                    {% else %}
+                        Crear Nueva Zona
+                    {% endif %}
+                </h2>
+            </div>
+            
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre de la Zona:</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="alert alert-danger mt-1">
+                                {{ form.nombre.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'listar_zonas' %}" class="btn btn-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if zona %}
+                                Actualizar Zona
+                            {% else %}
+                                Guardar Zona
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

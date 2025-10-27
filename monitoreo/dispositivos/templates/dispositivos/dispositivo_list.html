@@ -8,18 +8,47 @@
         <a class="btn btn-success mb-3" href="{% url 'crear_dispositivo' %}">Agregar Dispositivo</a>
         {% endif %}
 
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{% url 'listar_dispositivos' %}" class="row g-3 align-items-center">
+                    
+                    <div class="col-md-7">
+                        <label for="q" class="visually-hidden">Buscar</label>
+                        <input type="text" name="q" id="q" class="form-control" 
+                               placeholder="Buscar por nombre, categoría o zona..." value="{{ q }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="size" class="visually-hidden">Resultados</label>
+                        <select name="size" id="size" class="form-select" onchange="this.form.submit();">
+                            <option value="5" {% if size == '5' %}selected{% endif %}>Mostrar 5</option>
+                            <option value="10" {% if size == '10' %}selected{% endif %}>Mostrar 10</option>
+                            <option value="25" {% if size == '25' %}selected{% endif %}>Mostrar 25</option>
+                            <option value="50" {% if size == '50' %}selected{% endif %}>Mostrar 50</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-flex">
+                        <button type="submit" class="btn btn-primary flex-grow-1">Buscar</button>
+                        {% if q or size != '10' or categoria %}
+                        <a href="{% url 'listar_dispositivos' %}" class="btn btn-outline-secondary ms-2" title="Limpiar filtros">Limpiar</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
         <table class="table table-striped" id="tabla-dispositivos">
             <thead class="table-dark">
                 <tr>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Zona</th>
-                    <th>Consumo (W)</th>
+                    <th><a href="?sort=nombre&{{ querystring }}" class="text-white text-decoration-none">Nombre</a></th>
+                    <th><a href="?sort=categoria&{{ querystring }}" class="text-white text-decoration-none">Categoría</a></th>
+                    <th><a href="?sort=zona&{{ querystring }}" class="text-white text-decoration-none">Zona</a></th>
+                    <th><a href="?sort=watts&{{ querystring }}" class="text-white text-decoration-none">Consumo (W)</a></th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% for dispositivo in dispositivos %}
+                {% for dispositivo in page_obj %}
                 <tr id="fila-dispositivo-{{ dispositivo.id }}">
                     <td>{{ dispositivo.nombre }}</td>
                     <td>{{ dispositivo.categoria }}</td>
@@ -52,13 +81,45 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center">No hay dispositivos registrados.</td>
+                    <td colspan="5" class="text-center">No hay dispositivos registrados (o que coincidan con la búsqueda).</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Navegación de páginas">
+        <ul class="pagination justify-content-center">
+            
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1&{{ querystring }}">Primera</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Anterior</a></li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Primera</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Anterior</a></li>
+            {% endif %}
+            
+            {% for i in page_obj.paginator.get_elided_page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                {% elif i == page_obj.paginator.ELLIPSIS %}
+                    <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&{{ querystring }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Siguiente</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}">Última</a></li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" href="#">Siguiente</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#">Última</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -128,6 +189,7 @@
                                     data.message || 'No se pudo eliminar.',
                                     'error'
                                 );
+
                             }
                         })
                         .catch(error => {

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Gestión de Zonas</h1>
+        <div>
+            <a class="btn btn-primary" href="{% url 'dashboard' %}">Volver al inicio</a>
+            {% if perms.dispositivos.add_zona %}
+            <a class="btn btn-success" href="{% url 'crear_zona' %}">Crear Nueva Zona</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped" id="tabla-zonas">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre de la Zona</th>
+                        <th>Dispositivos en la zona</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for zona in zonas %}
+                    <tr id="fila-zona-{{ zona.id }}">
+                        <td>{{ zona.nombre }}</td>
+                        <td>{{ zona.num_dispositivos }}</td>
+                        <td>
+                            {% if perms.dispositivos.change_zona %}
+                            <a class="btn btn-sm btn-warning" href="{% url 'editar_zona' zona.id %}">Editar</a>
+                            {% endif %}
+                            
+                            {% if perms.dispositivos.delete_zona %}
+                            <button class="btn btn-sm btn-danger btn-eliminar-zona" 
+                                    data-url="{% url 'eliminar_zona' zona.id %}"
+                                    data-nombre="{{ zona.nombre }}"
+                                    data-fila-id="fila-zona-{{ zona.id }}">
+                                Eliminar
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No hay zonas registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    // Script para eliminación AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const botonesEliminar = document.querySelectorAll('.btn-eliminar-zona');
+        
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                
+                const url = this.dataset.url;
+                const nombre = this.dataset.nombre;
+                const filaId = this.dataset.filaId;
+
+                Swal.fire({
+                    title: `¿Estás seguro de eliminar "${nombre}"?`,
+                    text: "¡Esta acción no se puede deshacer!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, ¡eliminar!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrftoken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => {
+                            // Primero revisamos si la respuesta no fue exitosa
+                            if (!response.ok) {
+                                // Si el servidor devuelve un error (ej. 400), leemos el JSON
+                                return response.json().then(data => {
+                                    throw new Error(data.message || 'Error del servidor');
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.ok) {
+                                Swal.fire(
+                                    '¡Eliminado!',
+                                    data.message,
+                                    'success'
+                                );
+                                document.getElementById(filaId).remove();
+                            } else {
+                                // Esto es por si la respuesta fue 'ok' pero con data.ok = false
+                                Swal.fire('Error', data.message || 'No se pudo eliminar.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            // Captura errores de red y errores lanzados (ej. 400)
+                            Swal.fire('Error', error.message, 'error');
+                        });
+                    }
+                });
+            });
+        });
+    });
+    </script>
+{% endblock %}
