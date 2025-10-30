@@ -18,5 +18,8 @@ urlpatterns = [
     # MEDICIONES
     path('mediciones/', views.listar_mediciones, name='listar_mediciones'),
     
+    # ALERTAS (¡NUEVO!)
+    path('alertas/', views.listar_alertas, name='listar_alertas'), 
+
     # NOTA: Eliminamos 'dashboard/' de aquí porque ya está en monitoreo/urls.py
 ]

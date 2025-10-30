@@ -29,7 +29,6 @@ urlpatterns = [
     path('dispositivos/', include('dispositivos.urls')),  # todas las rutas de dispositivos
 
     # Login / Logout
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login', http_method_names=['get', 'post', 'options']), name='logout'),
     # Reset de contraseña
@@ -38,4 +37,3 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 ]
-

@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from .forms import DispositivoForm, RegistroEmpresaForm, ZonaForm
-from .models import Empresa, Zona, Dispositivo, Medicion
+from .models import Empresa, Zona, Dispositivo, Medicion, Alerta # IMPORTAR ALERTA
 
 # ==========================
 # FUNCIÓN DE AYUDA (Helper)
@@ -38,7 +38,8 @@ def dashboard(request):
 
     mediciones = mediciones_qs.order_by('-fecha')[:10]
     zonas = zonas_qs.annotate(num_dispositivos=Count('dispositivo'))
-
+    
+    # Nota: Las alertas se siguen calculando en el view para mantener el dashboard simple
     alertas_grave = []
     alertas_alta = []
     alertas_media = []
@@ -153,17 +154,14 @@ def detalle_dispositivo(request, dispositivo_id):
 
     mediciones = Medicion.objects.filter(dispositivo=dispositivo).order_by('-fecha')
     
-    alertas_grave = []
-    alertas_alta = []
-    alertas_media = []
-    for medicion in mediciones:
-        if medicion.consumo >= 100:
-            alertas_grave.append(medicion)
-        elif medicion.consumo > 80:
-            alertas_alta.append(medicion)
-        elif medicion.consumo > 60:
-            alertas_media.append(medicion)
+    # Se obtienen las alertas (reales del modelo Alerta, no simuladas)
+    alertas_grave = Alerta.objects.filter(dispositivo=dispositivo, gravedad='Grave').order_by('-fecha')
+    alertas_alta = Alerta.objects.filter(dispositivo=dispositivo, gravedad='Alta').order_by('-fecha')
+    alertas_media = Alerta.objects.filter(dispositivo=dispositivo, gravedad='Media').order_by('-fecha')
 
+
+    # Las alertas del detalle se filtran por gravedad
+    # Las listas en el detalle se llenarán con objetos Alerta, no Medicion.
     return render(request, 'dispositivos/dispositivo_detalle.html', {
         'dispositivo': dispositivo,
         'mediciones': mediciones,
@@ -319,7 +317,7 @@ def eliminar_zona(request, zona_id):
 
 
 # ==========================
-# MEDICIONES (¡MODIFICADO!)
+# MEDICIONES
 # ==========================
 @login_required
 @permission_required('dispositivos.view_medicion', raise_exception=True) 
@@ -383,6 +381,77 @@ def listar_mediciones(request):
     }
     
     return render(request, 'dispositivos/mediciones_list.html', context)
+
+
+# ==========================
+# ALERTAS (¡NUEVO!)
+# ==========================
+@login_required
+@permission_required('dispositivos.view_alerta', raise_exception=True) 
+def listar_alertas(request):
+    empresa_usuario = get_empresa_del_usuario(request.user)
+
+    # --- 1. Obtener parámetros de Filtro y Paginación ---
+    dispositivo_id = request.GET.get('dispositivo_id', '')
+    gravedad = request.GET.get('gravedad', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
+    page_number = request.GET.get('page') 
+    size = request.GET.get('size', '10')
+
+    try:
+        page_size = int(size)
+    except ValueError:
+        page_size = 10
+    
+    # --- 2. Queryset Base de Alertas (filtrado por empresa) ---
+    alertas_qs = Alerta.objects.select_related('dispositivo', 'dispositivo__zona')
+    if empresa_usuario:
+        alertas_qs = alertas_qs.filter(dispositivo__zona__empresa=empresa_usuario)
+
+    # --- 3. Queryset Base de Dispositivos (para el <select>) ---
+    dispositivos_para_filtro = Dispositivo.objects.order_by('nombre')
+    if empresa_usuario:
+        dispositivos_para_filtro = dispositivos_para_filtro.filter(zona__empresa=empresa_usuario)
+
+    # --- 4. Aplicar Filtros ---
+    if dispositivo_id:
+        alertas_qs = alertas_qs.filter(dispositivo_id=dispositivo_id)
+    
+    if gravedad:
+        alertas_qs = alertas_qs.filter(gravedad=gravedad)
+    
+    if fecha_inicio:
+        alertas_qs = alertas_qs.filter(fecha__date__gte=fecha_inicio) 
+    
+    if fecha_fin:
+        alertas_qs = alertas_qs.filter(fecha__date__lte=fecha_fin)
+
+    # --- 5. Aplicar Orden y Paginación ---
+    alertas_qs = alertas_qs.order_by('-fecha') # Más recientes primero
+    paginator = Paginator(alertas_qs, page_size) 
+    page_obj = paginator.get_page(page_number) 
+
+    # --- 6. QueryString para mantener filtros ---
+    params = request.GET.copy()
+    if 'page' in params:
+        del params['page']
+    querystring = params.urlencode() 
+
+    # --- 7. Contexto ---
+    context = {
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'dispositivos_para_filtro': dispositivos_para_filtro,
+        'dispositivo_id_seleccionado': dispositivo_id,
+        'gravedad_seleccionada': gravedad,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'size': size,
+        'GRAVEDAD_CHOICES': Alerta.GRAVEDAD_CHOICES
+    }
+    
+    return render(request, 'dispositivos/alertas_list.html', context)
 
 
 # ==========================

@@ -1,4 +1,4 @@
-{% extends "dispositivos/base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
   <h2>Eliminar Dispositivo</h2>
@@ -6,6 +6,6 @@
   <form method="post">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Eliminar</button>
-  <a href="{% url 'inicio' %}" class="btn btn-secondary">Cancelar</a>
+  <a href="{% url 'listar_dispositivos' %}" class="btn btn-secondary">Cancelar</a>
   </form>
 {% endblock %}

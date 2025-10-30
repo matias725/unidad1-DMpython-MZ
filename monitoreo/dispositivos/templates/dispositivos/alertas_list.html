@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1 class="mb-4">Historial de Alertas</h1>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{% url 'listar_alertas' %}" class="row g-3 align-items-end">
+                
+                <div class="col-md-3">
+                    <label for="dispositivo_id" class="form-label small">Dispositivo:</label>
+                    <select name="dispositivo_id" id="dispositivo_id" class="form-select">
+                        <option value="">-- Todos los dispositivos --</option>
+                        {% for d in dispositivos_para_filtro %}
+                            <option value="{{ d.id }}" 
+                                {% if d.id|stringformat:"s" == dispositivo_id_seleccionado %}selected{% endif %}>
+                                {{ d.nombre }} ({{ d.zona.nombre }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="gravedad" class="form-label small">Gravedad:</label>
+                    <select name="gravedad" id="gravedad" class="form-select">
+                        <option value="">-- Todas --</option>
+                        {% for value, label in GRAVEDAD_CHOICES %}
+                            <option value="{{ value }}" 
+                                {% if value == gravedad_seleccionada %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="fecha_inicio" class="form-label small">Desde:</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" 
+                           class="form-control" value="{{ fecha_inicio }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label for="fecha_fin" class="form-label small">Hasta:</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" 
+                           class="form-control" value="{{ fecha_fin }}">
+                </div>
+
+                <div class="col-md-3 d-flex">
+                    <select name="size" id="size" class="form-select me-2" style="width: 120px;">
+                        <option value="5" {% if size == '5' %}selected{% endif %}>Mostrar 5</option>
+                        <option value="10" {% if size == '10' %}selected{% endif %}>Mostrar 10</option>
+                        <option value="25" {% if size == '25' %}selected{% endif %}>Mostrar 25</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary flex-grow-1 me-2">Filtrar</button>
+                    <a href="{% url 'listar_alertas' %}" class="btn btn-outline-secondary" title="Limpiar filtros">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Gravedad</th>
+                        <th>Dispositivo</th>
+                        <th>Zona</th>
+                        <th>Mensaje</th>
+                        <th>Fecha y Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alerta in page_obj %}
+                    <tr class="
+                        {% if alerta.gravedad == 'Grave' %}table-danger{% endif %}
+                        {% if alerta.gravedad == 'Alta' %}table-warning{% endif %}
+                        {% if alerta.gravedad == 'Media' %}table-info{% endif %}
+                    ">
+                        <td>{{ alerta.gravedad }}</td>
+                        <td>{{ alerta.dispositivo.nombre }}</td>
+                        <td>{{ alerta.dispositivo.zona.nombre }}</td>
+                        <td>{{ alerta.mensaje }}</td>
+                        <td>{{ alerta.fecha|date:"d/m/Y H:i:s" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No hay alertas registradas (o que coincidan con los filtros).</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Navegación de páginas" class="mt-4">
+        <ul class="pagination justify-content-center">
+            
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1&{{ querystring }}">Primera</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Anterior</a></li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Primera</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Anterior</a></li>
+            {% endif %}
+            
+            {% for i in page_obj.paginator.get_elided_page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                {% elif i == page_obj.paginator.ELLIPSIS %}
+                    <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&{{ querystring }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Siguiente</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}">Última</a></li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" href="#">Siguiente</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#">Última</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+{% endblock %}

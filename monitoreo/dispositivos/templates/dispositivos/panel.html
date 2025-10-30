@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-    <!-- CONTENIDO PRINCIPAL -->
     <div class="container">
         <div class="row g-4 mb-4">
 
-            <!-- Dispositivos por Zona -->
             <div class="col-md-4">
                 <div class="card text-white bg-primary h-100">
                     <div class="card-header">Dispositivos por Zona</div>
@@ -18,7 +16,6 @@
                 </div>
             </div>
 
-            <!-- Mediciones Recientes -->
             <div class="col-md-4">
                 <div class="card text-white bg-success h-100">
                     <div class="card-header">Últimas Mediciones</div>
@@ -32,13 +29,12 @@
                 </div>
             </div>
 
-            <!-- Alertas Graves -->
             <div class="col-md-4">
                 <div class="card text-white bg-danger h-100">
                     <div class="card-header">Alertas Graves</div>
                     <div class="card-body">
                         {% for alerta in alertas_grave %}
-                            <p>{{ alerta.dispositivo.nombre }} - {{ alerta.mensaje }}</p>
+                            <p>{{ alerta.dispositivo.nombre }} - Consumo: {{ alerta.consumo }} kWh ({{ alerta.fecha|date:"H:i" }})</p>
                         {% empty %}
                             <p>No hay alertas graves.</p>
                         {% endfor %}
@@ -47,14 +43,13 @@
             </div>
         </div>
 
-        <!-- Alertas Altas y Medias -->
         <div class="row g-4">
             <div class="col-md-6">
                 <div class="card bg-warning h-100">
                     <div class="card-header">Alertas Altas</div>
                     <div class="card-body">
                         {% for alerta in alertas_alta %}
-                            <p>{{ alerta.dispositivo.nombre }} - {{ alerta.mensaje }}</p>
+                            <p>{{ alerta.dispositivo.nombre }} - Consumo: {{ alerta.consumo }} kWh ({{ alerta.fecha|date:"H:i" }})</p>
                         {% empty %}
                             <p>No hay alertas altas.</p>
                         {% endfor %}
@@ -67,7 +62,7 @@
                     <div class="card-header">Alertas Medias</div>
                     <div class="card-body">
                         {% for alerta in alertas_media %}
-                            <p>{{ alerta.dispositivo.nombre }} - {{ alerta.mensaje }}</p>
+                            <p>{{ alerta.dispositivo.nombre }} - Consumo: {{ alerta.consumo }} kWh ({{ alerta.fecha|date:"H:i" }})</p>
                         {% empty %}
                             <p>No hay alertas medias.</p>
                         {% endfor %}
@@ -78,4 +73,3 @@
 
     </div>
 {% endblock %}
-
