@@ -1,112 +1,193 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Mediciones - Sistema de Monitoreo{% endblock %}
+
 {% block content %}
-    <h1 class="mb-4">Historial de Mediciones</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-line me-2"></i>Mediciones</h2>
+    <a href="{% url 'dispositivos:medicion_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Nueva Medición
+    </a>
+</div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{% url 'listar_mediciones' %}" class="row g-3 align-items-end">
-                
-                <div class="col-md-4">
-                    <label for="dispositivo_id" class="form-label">Dispositivo:</label>
-                    <select name="dispositivo_id" id="dispositivo_id" class="form-select">
-                        <option value="">-- Todos los dispositivos --</option>
-                        {% for d in dispositivos_para_filtro %}
-                            <option value="{{ d.id }}" 
-                                {% if d.id|stringformat:"s" == dispositivo_id_seleccionado %}selected{% endif %}>
-                                {{ d.nombre }} ({{ d.zona.nombre }})
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label for="fecha_inicio" class="form-label">Desde:</label>
-                    <input type="date" name="fecha_inicio" id="fecha_inicio" 
-                           class="form-control" value="{{ fecha_inicio }}">
-                </div>
-
-                <div class="col-md-2">
-                    <label for="fecha_fin" class="form-label">Hasta:</label>
-                    <input type="date" name="fecha_fin" id="fecha_fin" 
-                           class="form-control" value="{{ fecha_fin }}">
-                </div>
-
-                <div class="col-md-2">
-                    <label for="size" class="form-label">Resultados:</label>
-                    <select name="size" id="size" class="form-select">
-                        <option value="5" {% if size == '5' %}selected{% endif %}>Mostrar 5</option>
-                        <option value="10" {% if size == '10' %}selected{% endif %}>Mostrar 10</option>
-                        <option value="25" {% if size == '25' %}selected{% endif %}>Mostrar 25</option>
-                        <option value="50" {% if size == '50' %}selected{% endif %}>Mostrar 50</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2 d-flex">
-                    <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
-                    <a href="{% url 'listar_mediciones' %}" class="btn btn-outline-secondary ms-2" title="Limpiar filtros">Limpiar</a>
-                </div>
-            </form>
-        </div>
-    </div>
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Dispositivo</th>
-                        <th>Zona</th>
-                        <th>Consumo (kWh)</th>
-                        <th>Fecha y Hora</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for medicion in page_obj %}
-                    <tr>
-                        <td>{{ medicion.dispositivo.nombre }}</td>
-                        <td>{{ medicion.dispositivo.zona.nombre }}</td>
-                        <td>{{ medicion.consumo }}</td>
-                        <td>{{ medicion.fecha|date:"d/m/Y H:i" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center">No hay mediciones registradas (o que coincidan con los filtros).</td>
-                    </tr>
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="dispositivo_id" class="form-select">
+                    <option value="">Todos los dispositivos</option>
+                    {% for dispositivo in dispositivos_para_filtro %}
+                    <option value="{{ dispositivo.id }}" {% if dispositivo_id_seleccionado == dispositivo.id|stringformat:"s" %}selected{% endif %}>
+                        {{ dispositivo.nombre }}
+                    </option>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control" placeholder="Fecha inicio">
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control" placeholder="Fecha fin">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 
-    {% if page_obj.has_other_pages %}
-    <nav aria-label="Navegación de páginas" class="mt-4">
-        <ul class="pagination justify-content-center">
-            
-            {% if page_obj.has_previous %}
-                <li class="page-item"><a class="page-link" href="?page=1&{{ querystring }}">Primera</a></li>
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Anterior</a></li>
-            {% else %}
-                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Primera</a></li>
-                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Anterior</a></li>
-            {% endif %}
-            
-            {% for i in page_obj.paginator.get_elided_page_range %}
-                {% if page_obj.number == i %}
-                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
-                {% elif i == page_obj.paginator.ELLIPSIS %}
-                    <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
-                {% else %}
-                    <li class="page-item"><a class="page-link" href="?page={{ i }}&{{ querystring }}">{{ i }}</a></li>
+<!-- Paginación superior -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <form method="get" class="d-inline">
+            {% for key, value in request.GET.items %}
+                {% if key != 'size' and key != 'page' %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
                 {% endif %}
             {% endfor %}
+            <select name="size" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                <option value="5" {% if size == '5' %}selected{% endif %}>5 por página</option>
+                <option value="15" {% if size == '15' %}selected{% endif %}>15 por página</option>
+                <option value="30" {% if size == '30' %}selected{% endif %}>30 por página</option>
+            </select>
+        </form>
+    </div>
+    <small class="text-muted">
+        Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }} mediciones
+    </small>
+</div>
 
-            {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Siguiente</a></li>
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}">Última</a></li>
-            {% else %}
-                <li class="page-item disabled"><a class="page-link" href="#">Siguiente</a></li>
-                <li class="page-item disabled"><a class="page-link" href="#">Última</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
-    {% endblock %}
+<!-- Tabla -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Dispositivo</th>
+                    <th>Consumo (kWh)</th>
+                    <th>Fecha</th>
+                    <th>Zona</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medicion in page_obj %}
+                <tr>
+                    <td>{{ medicion.dispositivo.nombre }}</td>
+                    <td>{{ medicion.consumo }}</td>
+                    <td>{{ medicion.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>{{ medicion.dispositivo.zona.nombre|default:"Sin zona" }}</td>
+                    <td>
+                        {% if medicion.consumo >= 100 %}
+                        <span class="badge bg-danger">Crítico</span>
+                        {% elif medicion.consumo > 80 %}
+                        <span class="badge bg-warning">Alto</span>
+                        {% elif medicion.consumo > 60 %}
+                        <span class="badge bg-info">Medio</span>
+                        {% else %}
+                        <span class="badge bg-success">Normal</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'dispositivos:medicion_detail' medicion.id %}" class="btn btn-outline-info" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'dispositivos:medicion_edit' medicion.id %}" class="btn btn-outline-warning" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-outline-danger" onclick="eliminarMedicion({{ medicion.id }}, '{{ medicion.dispositivo.nombre }}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No se encontraron mediciones</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1&{{ querystring }}">Primera</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Anterior</a>
+        </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Siguiente</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}">Última</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>
+function eliminarMedicion(id, dispositivo) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: `Se eliminará la medición de "${dispositivo}"`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/mediciones/${id}/eliminar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    Swal.fire('Eliminado', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error', 'Error al eliminar medición', 'error');
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

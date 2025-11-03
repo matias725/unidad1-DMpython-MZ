@@ -1,16 +1,15 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% if zona %}Editar{% else %}Crear{% endif %} Zona - Sistema de Monitoreo{% endblock %}
+{% block title %}Nueva Medición - Sistema de Monitoreo{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-success text-white">
                 <h4 class="mb-0">
-                    <i class="fas fa-map-marker-alt me-2"></i>
-                    {% if zona %}Editar Zona{% else %}Nueva Zona{% endif %}
+                    <i class="fas fa-chart-line me-2"></i>Nueva Medición
                 </h4>
             </div>
             <div class="card-body">
@@ -18,10 +17,10 @@
                     {% csrf_token %}
                     {{ form|crispy }}
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-success">
                             <i class="fas fa-save me-2"></i>Guardar
                         </button>
-                        <a href="{% url 'dispositivos:zona_list' %}" class="btn btn-secondary">
+                        <a href="{% url 'dispositivos:medicion_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Cancelar
                         </a>
                     </div>

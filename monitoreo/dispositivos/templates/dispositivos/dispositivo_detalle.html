@@ -1,159 +1,168 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}{{ dispositivo.nombre }} - Sistema de Monitoreo{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-dark text-white">
-            <h1 class="mb-0">Detalle: {{ dispositivo.nombre }}</h1>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-microchip me-2"></i>{{ dispositivo.nombre }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Categoría:</strong> <span class="badge bg-secondary">{{ dispositivo.categoria }}</span></p>
+                        <p><strong>Zona:</strong> {{ dispositivo.zona.nombre|default:"Sin zona" }}</p>
+                        <p><strong>Consumo nominal:</strong> {{ dispositivo.watts }}W</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <p><strong>Categoría:</strong> {{ dispositivo.categoria }}</p>
-            <p><strong>Zona:</strong>
-                {% if dispositivo.zona %}
-                    {{ dispositivo.zona.nombre }}
+
+        <!-- Mediciones Recientes -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Mediciones Recientes</h5>
+            </div>
+            <div class="card-body">
+                {% if mediciones %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Consumo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for medicion in mediciones|slice:":10" %}
+                            <tr>
+                                <td>{{ medicion.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ medicion.consumo }} kWh</td>
+                                <td>
+                                    {% if medicion.consumo >= 100 %}
+                                    <span class="badge bg-danger">Crítico</span>
+                                    {% elif medicion.consumo > 80 %}
+                                    <span class="badge bg-warning">Alto</span>
+                                    {% elif medicion.consumo > 60 %}
+                                    <span class="badge bg-info">Medio</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Normal</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
-                    Sin zona
+                <p class="text-muted">No hay mediciones disponibles</p>
                 {% endif %}
-            </p>
-            <p><strong>Consumo Nominal (W):</strong> {{ dispositivo.watts }}</p>
+            </div>
         </div>
     </div>
 
-    <h3 class="mt-4">Mediciones</h3>
-    <div class="card shadow-sm">
-        <ul class="list-group list-group-flush">
-            {% for medicion in mediciones %}
-                <li class="list-group-item">
-                    {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
-                </li>
-            {% empty %}
-                <li class="list-group-item">No hay mediciones registradas.</li>
-            {% endfor %}
-        </ul>
-    </div>
+    <div class="col-md-4">
+        <!-- Alertas -->
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Alertas</h5>
+            </div>
+            <div class="card-body">
+                {% if alertas_grave %}
+                <h6 class="text-danger">Críticas</h6>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for alerta in alertas_grave|slice:":5" %}
+                    <li class="list-group-item list-group-item-danger">
+                        {{ alerta.fecha|date:"d/m/Y H:i" }} - {{ alerta.mensaje }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
 
-    <h3 class="mt-4">Alertas Graves</h3>
-    <div class="card">
-        <ul class="list-group list-group-flush">
-            {% for medicion in alertas_grave %}
-                <li class="list-group-item list-group-item-danger">
-                    {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
-                </li>
-            {% empty %}
-                <li class="list-group-item">No hay alertas graves.</li>
-            {% endfor %}
-        </ul>
-    </div>
+                {% if alertas_alta %}
+                <h6 class="text-warning">Altas</h6>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for alerta in alertas_alta|slice:":5" %}
+                    <li class="list-group-item list-group-item-warning">
+                        {{ alerta.fecha|date:"d/m/Y H:i" }} - {{ alerta.mensaje }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
 
-    <h3 class="mt-4">Alertas Altas</h3>
-    <div class="card">
-        <ul class="list-group list-group-flush">
-            {% for medicion in alertas_alta %}
-                <li class="list-group-item list-group-item-warning">
-                    {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
-                </li>
-            {% empty %}
-                <li class="list-group-item">No hay alertas altas.</li>
-            {% endfor %}
-        </ul>
-    </div>
+                {% if alertas_media %}
+                <h6 class="text-info">Medias</h6>
+                <ul class="list-group list-group-flush">
+                    {% for alerta in alertas_media|slice:":5" %}
+                    <li class="list-group-item list-group-item-info">
+                        {{ alerta.fecha|date:"d/m/Y H:i" }} - {{ alerta.mensaje }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
 
-    <h3 class="mt-4">Alertas Medias</h3>
-    <div class="card">
-        <ul class="list-group list-group-flush">
-            {% for medicion in alertas_media %}
-                <li class="list-group-item list-group-item-info">
-                    {{ medicion.fecha|date:"d/m/Y H:i" }} - {{ medicion.consumo }} kWh
-                </li>
-            {% empty %}
-                <li class="list-group-item">No hay alertas medias.</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div class="mt-4">
-        <a href="{% url 'listar_dispositivos' %}" class="btn btn-secondary">Volver a Dispositivos</a>
-        <a href="{% url 'editar_dispositivo' dispositivo.id %}" class="btn btn-warning">Editar</a>
-        
-        <button class="btn btn-danger btn-eliminar-detalle" 
-                data-url="{% url 'eliminar_dispositivo' dispositivo.id %}"
-                data-nombre="{{ dispositivo.nombre }}"
-                data-redirect-url="{% url 'listar_dispositivos' %}">
-            Eliminar
-        </button>
+                {% if not alertas_grave and not alertas_alta and not alertas_media %}
+                <p class="text-muted">No hay alertas para este dispositivo</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-    // Función para obtener el token CSRF
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    const csrftoken = getCookie('csrftoken');
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        const botonEliminar = document.querySelector('.btn-eliminar-detalle');
-        
-        if (botonEliminar) {
-            botonEliminar.addEventListener('click', function(e) {
-                e.preventDefault(); 
-                
-                const url = this.dataset.url;
-                const nombre = this.dataset.nombre;
-                const redirectUrl = this.dataset.redirectUrl;
+<div class="mt-4">
+    <a href="{% url 'dispositivos:dispositivo_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Dispositivos
+    </a>
+    {% if user.is_superuser or user.groups.all %}
+    <a href="{% url 'dispositivos:dispositivo_edit' dispositivo.id %}" class="btn btn-warning">
+        <i class="fas fa-edit me-2"></i>Editar
+    </a>
+    {% endif %}
+    {% if user.is_superuser %}
+    <button class="btn btn-danger" onclick="eliminarDispositivo({{ dispositivo.id }}, '{{ dispositivo.nombre }}')">
+        <i class="fas fa-trash me-2"></i>Eliminar
+    </button>
+    {% endif %}
+</div>
 
-                Swal.fire({
-                    title: `¿Estás seguro de eliminar "${nombre}"?`,
-                    text: "¡Esta acción no se puede deshacer!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, ¡eliminar!',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': csrftoken,
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.ok) {
-                                // Éxito: Mostrar alerta y REDIRIGIR
-                                Swal.fire(
-                                    '¡Eliminado!',
-                                    data.message,
-                                    'success'
-                                ).then(() => {
-                                    // Redirigir al listado
-                                    window.location.href = redirectUrl; 
-                                });
-                            } else {
-                                Swal.fire('Error', data.message || 'No se pudo eliminar.', 'error');
-                            }
-                        })
-                        .catch(error => {
-                            Swal.fire('Error', 'Error de red.', 'error');
-                        });
-                    }
-                });
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function eliminarDispositivo(id, nombre) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: `Se eliminará el dispositivo "${nombre}"`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/dispositivos/${id}/eliminar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    Swal.fire('Eliminado', data.message, 'success').then(() => {
+                        window.location.href = '/dispositivos/';
+                    });
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
             });
         }
     });
+}
 </script>
 {% endblock %}

@@ -1,79 +1,105 @@
-{% comment %}
-Archivo: dispositivos/templates/base.html (Actualizado)
-{% endcomment %}
-
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Monitoreo{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% block extra_css %}{% endblock %}
 </head>
-<body style="background-color: #f8f9fa;">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">Dashboard</a>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dispositivos:dashboard' %}">
+                <i class="fas fa-microchip me-2"></i>EcoEnergy
+            </a>
+            
+            {% if user.is_authenticated %}
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
-                
                 <ul class="navbar-nav me-auto">
-                    
-                    {% if perms.dispositivos.view_zona %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listar_zonas' %}">Zonas</a>
+                        <a class="nav-link" href="{% url 'dispositivos:dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
                     </li>
-                    {% endif %}
-                    
-                    {% if perms.dispositivos.view_dispositivo %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs me-1"></i>Dispositivos
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'dispositivos:dispositivo_list' %}">Listar</a></li>
+                            {% if user.is_superuser or user.groups.all %}
+                            <li><a class="dropdown-item" href="{% url 'dispositivos:dispositivo_create' %}">Crear</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-map-marker-alt me-1"></i>Zonas
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'dispositivos:zona_list' %}">Listar</a></li>
+                            {% if user.is_superuser or user.groups.all %}
+                            <li><a class="dropdown-item" href="{% url 'dispositivos:zona_create' %}">Crear</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listar_dispositivos' %}">Dispositivos</a>
+                        <a class="nav-link" href="{% url 'dispositivos:medicion_list' %}">
+                            <i class="fas fa-chart-line me-1"></i>Mediciones
+                        </a>
                     </li>
-                    {% endif %}
-                    
-                    {% if perms.dispositivos.view_medicion %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listar_mediciones' %}">Mediciones</a>
+                        <a class="nav-link" href="{% url 'dispositivos:alerta_list' %}">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Alertas
+                        </a>
                     </li>
-                    {% endif %}
-
-                    {% if perms.dispositivos.view_alerta %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listar_alertas' %}">Alertas</a>
-                    </li>
-                    {% endif %}
-
                 </ul>
                 
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <span class="navbar-text me-3">
-                            {% if user.empresa %}
-                                {{ user.empresa.nombre }}
-                            {% else %}
-                                {{ user.username }}
-                            {% endif %}
-                        </span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ user.first_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'usuarios:perfil' %}">
+                                <i class="fas fa-user-edit me-2"></i>Mi Perfil
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'usuarios:cambiar_password' %}">
+                                <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'usuarios:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
+            {% endif %}
         </div>
     </nav>
 
-    <div class="container">
-        {% block content %}
+    <main class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
 
-        {% endblock %}
-    </div>
+        {% block content %}{% endblock %}
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

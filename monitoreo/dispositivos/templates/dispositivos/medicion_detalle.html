@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Medición - Sistema de Monitoreo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Detalle de Medición</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Dispositivo:</strong> {{ medicion.dispositivo.nombre }}</p>
+                        <p><strong>Categoría:</strong> <span class="badge bg-secondary">{{ medicion.dispositivo.categoria }}</span></p>
+                        <p><strong>Zona:</strong> {{ medicion.dispositivo.zona.nombre|default:"Sin zona" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Consumo:</strong> {{ medicion.consumo }} kWh</p>
+                        <p><strong>Fecha:</strong> {{ medicion.fecha|date:"d/m/Y H:i:s" }}</p>
+                        <p><strong>Estado:</strong> 
+                            {% if medicion.consumo >= 100 %}
+                            <span class="badge bg-danger">Crítico</span>
+                            {% elif medicion.consumo > 80 %}
+                            <span class="badge bg-warning">Alto</span>
+                            {% elif medicion.consumo > 60 %}
+                            <span class="badge bg-info">Medio</span>
+                            {% else %}
+                            <span class="badge bg-success">Normal</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'dispositivos:medicion_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver a Mediciones
+            </a>
+            <a href="{% url 'dispositivos:medicion_edit' medicion.id %}" class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Editar
+            </a>
+            <button class="btn btn-danger" onclick="eliminarMedicion({{ medicion.id }}, '{{ medicion.dispositivo.nombre }}')">
+                <i class="fas fa-trash me-2"></i>Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>
+function eliminarMedicion(id, dispositivo) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: `Se eliminará la medición de "${dispositivo}"`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/mediciones/${id}/eliminar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    Swal.fire('Eliminado', data.message, 'success').then(() => {
+                        window.location.href = '/mediciones/';
+                    });
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error', 'Error al eliminar medición', 'error');
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

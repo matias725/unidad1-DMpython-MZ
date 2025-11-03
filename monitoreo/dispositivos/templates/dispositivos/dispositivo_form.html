@@ -1,78 +1,33 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Dispositivo - Sistema de Monitoreo{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h2 class="mb-0">
-                    {% if form.instance.pk %}
-                        Editar Dispositivo: {{ form.instance.nombre }}
-                    {% else %}
-                        Crear Nuevo Dispositivo
-                    {% endif %}
-                </h2>
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-microchip me-2"></i>
+                    {% if form.instance.pk %}Editar Dispositivo{% else %}Nuevo Dispositivo{% endif %}
+                </h4>
             </div>
-            
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
-                    {{ form.as_p }}
-                    
-                    <hr>
-                    
-                    <div class="d-flex justify-content-end">
-                        
-                        {% if form.instance.pk %}
-                            <a href="{% url 'detalle_dispositivo' form.instance.pk %}" class="btn btn-secondary me-2">Cancelar</a>
-                        {% else %}
-                            <a href="{% url 'listar_dispositivos' %}" class="btn btn-secondary me-2">Cancelar</a>
-                        {% endif %}
-                        
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-primary">
-                            {% if form.instance.pk %}
-                                Actualizar Dispositivo
-                            {% else %}
-                                Guardar Dispositivo
-                            {% endif %}
+                            <i class="fas fa-save me-2"></i>Guardar
                         </button>
+                        <a href="{% url 'dispositivos:dispositivo_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancelar
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
-
     </div>
 </div>
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Busca todos los campos de texto, selectores y áreas de texto
-        const fields = document.querySelectorAll('form p input, form p select, form p textarea');
-        fields.forEach(field => {
-            // No aplica a checkboxes
-            if (field.type !== 'checkbox' && field.type !== 'radio') {
-                field.classList.add('form-control');
-            }
-        });
-        
-        // Busca todas las etiquetas (labels)
-        const labels = document.querySelectorAll('form p label');
-        labels.forEach(label => {
-            label.classList.add('form-label');
-            // Mueve el label fuera del <p> y lo pone antes
-            if (label.parentElement.tagName === 'P') {
-                const p = label.parentElement;
-                const wrapper = document.createElement('div');
-                wrapper.className = 'mb-3';
-                p.parentNode.insertBefore(wrapper, p);
-                wrapper.appendChild(p);
-                // Mueve el label para que esté antes del input
-                p.parentNode.insertBefore(label, p);
-            }
-        });
-    });
-</script>
 {% endblock %}
