@@ -1,20 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-
-class Empresa(models.Model):
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
-    nombre = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.nombre
+from usuarios.models import Organizacion
 
 class Zona(models.Model):
     nombre = models.CharField(max_length=100)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
+    organizacion = models.ForeignKey(Organizacion, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ['nombre', 'organizacion']
 
     def __str__(self):
-        return f"{self.nombre} ({self.empresa.nombre})"
+        return f"{self.nombre} ({self.organizacion.nombre})"
 
 class Dispositivo(models.Model):
     CATEGORIAS = [

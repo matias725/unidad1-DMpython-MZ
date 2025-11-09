@@ -13,6 +13,7 @@ urlpatterns = [
     path('dispositivos/<int:dispositivo_id>/editar/', views.editar_dispositivo, name='dispositivo_edit'),
     path('dispositivos/<int:dispositivo_id>/eliminar/', views.eliminar_dispositivo, name='dispositivo_delete'),
     path('dispositivos/exportar/', views.exportar_dispositivos_excel, name='dispositivo_export'),
+
     
     # Zonas
     path('zonas/', views.listar_zonas, name='zona_list'),

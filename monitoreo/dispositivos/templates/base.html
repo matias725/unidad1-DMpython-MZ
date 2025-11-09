@@ -34,9 +34,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'dispositivos:dispositivo_list' %}">Listar</a></li>
-                            {% if user.is_superuser or user.groups.all %}
                             <li><a class="dropdown-item" href="{% url 'dispositivos:dispositivo_create' %}">Crear</a></li>
-                            {% endif %}
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -45,9 +43,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'dispositivos:zona_list' %}">Listar</a></li>
-                            {% if user.is_superuser or user.groups.all %}
                             <li><a class="dropdown-item" href="{% url 'dispositivos:zona_create' %}">Crear</a></li>
-                            {% endif %}
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -66,6 +62,9 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>{{ user.first_name|default:user.username }}
+                            {% if user.perfil.rol %}
+                            <small class="badge bg-secondary ms-1">{{ user.perfil.get_rol_display }}</small>
+                            {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'usuarios:perfil' %}">
@@ -87,19 +86,47 @@
     </nav>
 
     <main class="container mt-4">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-
         {% block content %}{% endblock %}
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% if messages %}
+    <script>
+        {% for message in messages %}
+            {% if message.tags == 'alert-success' or message.tags == 'success' %}
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: '{{ message|escapejs }}',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            {% elif message.tags == 'alert-error' or message.tags == 'error' %}
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: '{{ message|escapejs }}'
+                });
+            {% elif message.tags == 'alert-warning' or message.tags == 'warning' %}
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Advertencia',
+                    text: '{{ message|escapejs }}'
+                });
+            {% else %}
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Información',
+                    text: '{{ message|escapejs }}',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            {% endif %}
+        {% endfor %}
+    </script>
+    {% endif %}
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

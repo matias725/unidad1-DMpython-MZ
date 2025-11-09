@@ -9,22 +9,61 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-from pathlib import Path
+import logging
 import os
-from dotenv import load_dotenv
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-4ozd7gyc&@%lgeh$ntuuoh!3k_p64*&#_j8$9_3^d$tl8yjspg")
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
+if load_dotenv:
+    try:
+        load_dotenv(BASE_DIR / ".env")
+    except Exception as e:
+        print(f"Warning: Could not load .env file: {e}")
 
-ALLOWED_HOSTS = ['*']
+# Security: Never use default secret key in production
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if os.getenv("DJANGO_DEBUG", "False") == "True":
+        SECRET_KEY = "django-insecure-dev-key-change-in-production"
+    else:
+        raise ValueError("DJANGO_SECRET_KEY environment variable must be set in production")
+
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+
+# Security: Restrict allowed hosts in production
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+    # CSRF settings for development
+    CSRF_COOKIE_HTTPONLY = False
+    CSRF_USE_SESSIONS = False
+else:
+    ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
+    if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+        ALLOWED_HOSTS = ['*']
 
 # Production settings
 if not DEBUG:
     STATIC_ROOT = BASE_DIR / 'staticfiles'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+    # Security settings for production
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000 if SECURE_SSL_REDIRECT else 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+    CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
+    SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = False
 
 
 
@@ -61,7 +100,10 @@ ROOT_URLCONF = 'monitoreo.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'dispositivos' / 'templates',
+            BASE_DIR / 'usuarios' / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,27 +121,35 @@ WSGI_APPLICATION = 'monitoreo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-ENGINE = os.getenv("DB_ENGINE", "sqlite")
+ENGINE = os.getenv("DB_ENGINE", "mysql" if not DEBUG else "sqlite")
 
-if ENGINE == "mysql":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("DB_NAME"),
-            "USER": os.getenv("DB_USER"),
-            "PASSWORD": os.getenv("DB_PASSWORD"),
-            "HOST": os.getenv("DB_HOST", "localhost"),
-            "PORT": os.getenv("DB_PORT", "3306"),
-            "OPTIONS": {"charset": "utf8mb4"},
+try:
+    if ENGINE == "mysql":
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.mysql",
+                "NAME": os.getenv("DB_NAME", "proyecto_db"),
+                "USER": os.getenv("DB_USER", "proyecto_user"),
+                "PASSWORD": os.getenv("DB_PASSWORD"),
+                "HOST": os.getenv("DB_HOST", "localhost"),
+                "PORT": os.getenv("DB_PORT", "3306"),
+                "OPTIONS": {
+                    "charset": "utf8mb4",
+                    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+                    "ssl_ca": "/etc/ssl/certs/aws-rds/rds-combined-ca-bundle.pem"
+                },
+            }
         }
-    }
-else:  # SQLite por defecto
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / os.getenv("DB_NAME", "db.sqlite3"),
+    else:  # SQLite por defecto
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / os.getenv("DB_NAME", "db.sqlite3"),
+            }
         }
-    }
+except Exception as e:
+    print(f"Database configuration error: {e}")
+    raise
 
 
 # Password validation
@@ -124,9 +174,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'es-us'
+LANGUAGE_CODE = os.getenv('DJANGO_LANGUAGE_CODE', 'es-cl')
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.getenv('DJANGO_TIME_ZONE', 'America/Santiago')
 
 USE_I18N = True
 
@@ -158,6 +208,62 @@ LOGOUT_REDIRECT_URL = "/usuarios/login/"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'dispositivos': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'usuarios': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Create logs directory if it doesn't exist
+try:
+    (BASE_DIR / 'logs').mkdir(exist_ok=True)
+except Exception:
+    pass
+
 # Messages
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
@@ -167,3 +273,13 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Session settings
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True

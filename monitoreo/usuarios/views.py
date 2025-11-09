@@ -1,3 +1,5 @@
+import logging
+import os
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -5,26 +7,64 @@ from django.contrib.auth.views import LoginView, PasswordResetView
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db import transaction
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.views.decorators.cache import never_cache
+from django.utils.html import escape
 from .forms import RegistroForm, PerfilForm, CambiarPasswordForm
 from .models import Perfil
+
+logger = logging.getLogger(__name__)
+
+def validate_safe_path(path_param):
+    """Valida que el parámetro no contenga path traversal"""
+    if not path_param:
+        return True
+    
+    dangerous_patterns = ['../', '..\\', '/..', '\\..', '../', '..\\']
+    path_str = str(path_param)
+    
+    for pattern in dangerous_patterns:
+        if pattern in path_str:
+            return False
+    return True
 
 class CustomLoginView(LoginView):
     template_name = 'usuarios/login.html'
     redirect_authenticated_user = True
 
+@never_cache
 def registro(request):
-    if request.method == 'POST':
-        form = RegistroForm(request.POST)
-        if form.is_valid():
-            with transaction.atomic():
-                user = form.save()
-                Perfil.objects.create(user=user)
-                username = form.cleaned_data.get('username')
-                messages.success(request, f'Cuenta creada para {username}!')
-                return redirect('usuarios:login')
-    else:
-        form = RegistroForm()
-    return render(request, 'usuarios/registro.html', {'form': form})
+    try:
+        if request.method == 'POST':
+            # Validar datos de entrada contra path traversal
+            for key, value in request.POST.items():
+                if not validate_safe_path(value):
+                    logger.warning(f'Intento de path traversal en registro: {key}={value}')
+                    messages.error(request, 'Datos de entrada no válidos.')
+                    return redirect('usuarios:registro')
+                    
+            form = RegistroForm(request.POST)
+            if form.is_valid():
+                try:
+                    with transaction.atomic():
+                        user = form.save()
+                        Perfil.objects.create(user=user)
+                        username = escape(form.cleaned_data.get('username'))
+                        logger.info(f'Nuevo usuario registrado: {username}')
+                        messages.success(request, f'Cuenta creada para {username}!')
+                        return redirect('usuarios:login')
+                except Exception as e:
+                    logger.error(f'Error creando usuario: {str(e)}')
+                    messages.error(request, 'Error al crear la cuenta. Inténtalo de nuevo.')
+        else:
+            form = RegistroForm()
+            
+        return render(request, 'usuarios/registro.html', {'form': form})
+        
+    except Exception as e:
+        logger.error(f'Error en registro: {str(e)}')
+        messages.error(request, 'Error interno. Inténtalo más tarde.')
+        return redirect('usuarios:login')
 
 @login_required
 def perfil(request):

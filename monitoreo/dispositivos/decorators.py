@@ -1,19 +1,45 @@
-# Archivo: monitoreo/dispositivos/decorators.py
+from functools import wraps
+from django.http import Http404
+from django.contrib.auth.decorators import login_required
 
-from django.contrib.auth.decorators import user_passes_test
-from django.core.exceptions import PermissionDenied
+def cliente_admin_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped_view(request, *args, **kwargs):
+        try:
+            user_role = request.user.perfil.rol
+            if user_role in ['cliente_admin', 'encargado_ecoenergy']:
+                return view_func(request, *args, **kwargs)
+            else:
+                raise Http404("Acceso denegado")
+        except:
+            raise Http404("Acceso denegado")
+    return _wrapped_view
 
-def group_required(group_name):
-    """
-    Decorador que comprueba si un usuario pertenece a un grupo específico.
-    Si no pertenece, lanza PermissionDenied (Error 403).
-    """
-    def check_group(user):
-        if user.groups.filter(name=group_name).exists():
-            return True
-        # Si no pertenece al grupo, lanzamos un error 403
-        raise PermissionDenied
-    
-    # user_passes_test se encarga de revisar el usuario logueado
-    # y manejar la redirección al login si no está autenticado.
-    return user_passes_test(check_group)
+def cliente_electronico_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped_view(request, *args, **kwargs):
+        try:
+            user_role = request.user.perfil.rol
+            if user_role in ['cliente_electronico', 'cliente_admin', 'encargado_ecoenergy']:
+                return view_func(request, *args, **kwargs)
+            else:
+                raise Http404("Acceso denegado")
+        except:
+            raise Http404("Acceso denegado")
+    return _wrapped_view
+
+def encargado_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped_view(request, *args, **kwargs):
+        try:
+            user_role = request.user.perfil.rol
+            if user_role == 'encargado_ecoenergy':
+                return view_func(request, *args, **kwargs)
+            else:
+                raise Http404("Acceso denegado")
+        except:
+            raise Http404("Acceso denegado")
+    return _wrapped_view
