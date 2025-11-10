@@ -197,6 +197,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
+# Verificación suave: avisar en los logs si las librerías de crispy no están instaladas.
+try:
+    # Intentamos importar para detectar problemas en tiempo de arranque/producción.
+    import crispy_forms  # type: ignore
+    import crispy_bootstrap5  # type: ignore
+except Exception:
+    logging.warning(
+        "django-crispy-forms o crispy-bootstrap5 no están instalados. "
+        "Las plantillas que usan {% load crispy_forms_tags %} fallarán. "
+        "Instale las dependencias (ej: pip install -r requirements-aws.txt) y reinicie el servidor."
+    )
+
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
