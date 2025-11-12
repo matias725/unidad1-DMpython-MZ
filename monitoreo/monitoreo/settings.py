@@ -133,11 +133,19 @@ try:
                 "PASSWORD": os.getenv("DB_PASSWORD"),
                 "HOST": os.getenv("DB_HOST", "localhost"),
                 "PORT": os.getenv("DB_PORT", "3306"),
-                "OPTIONS": {
-                    "charset": "utf8mb4",
-                    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-                    "ssl_ca": "/etc/ssl/certs/aws-rds/rds-combined-ca-bundle.pem"
-                },
+                # Construimos OPTIONS dinámicamente para evitar pasar keywords
+                # que algunos adaptadores (mysqlclient) no aceptan en todas
+                # las plataformas (por ejemplo 'ssl_ca' en Windows).
+                # Usamos ssl={'ca': path} solo si el archivo existe y no estamos
+                # en modo DEBUG.
+                "OPTIONS": (lambda: {
+                    **({
+                        "charset": "utf8mb4",
+                        "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+                    }),
+                    **((lambda p=os.getenv('MYSQL_SSL_CA', '/etc/ssl/certs/aws-rds/rds-combined-ca-bundle.pem'):
+                        {"ssl": {"ca": p}} if (not DEBUG and Path(p).exists()) else {})())
+                })(),
             }
         }
     else:  # SQLite por defecto
