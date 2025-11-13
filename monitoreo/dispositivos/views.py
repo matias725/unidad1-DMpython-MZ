@@ -556,10 +556,10 @@ def listar_alertas(request):
     organizacion_usuario = get_organizacion_del_usuario(request.user)
     user_role = get_user_role(request.user)
 
-    dispositivo_id = request.GET.get('dispositivo_id', '')
-    gravedad = request.GET.get('gravedad', '')
-    fecha_inicio = request.GET.get('fecha_inicio', '')
-    fecha_fin = request.GET.get('fecha_fin', '')
+    dispositivo_id = request.GET.get('dispositivo_id', '').strip()
+    gravedad = request.GET.get('gravedad', '').strip()
+    fecha_inicio = request.GET.get('fecha_inicio', '').strip()
+    fecha_fin = request.GET.get('fecha_fin', '').strip()
     page_number = request.GET.get('page') 
     size = request.GET.get('size', '10')
 
@@ -579,6 +579,7 @@ def listar_alertas(request):
     if dispositivo_id:
         alertas_qs = alertas_qs.filter(dispositivo_id=dispositivo_id)
     
+    # Solo filtrar por gravedad si no es vacío (permite mostrar todas cuando se selecciona "Todas las gravedades")
     if gravedad:
         alertas_qs = alertas_qs.filter(gravedad=gravedad)
     
@@ -598,10 +599,13 @@ def listar_alertas(request):
     paginator = Paginator(alertas_qs, page_size) 
     page_obj = paginator.get_page(page_number) 
 
+    # Construir querystring limpio: solo incluir parámetros que no estén vacíos
     params = request.GET.copy()
     if 'page' in params:
         del params['page']
-    querystring = params.urlencode() 
+    # Remover parámetros con valores vacíos para evitar &gravedad=&... en URLs de paginación
+    clean_params = [(k, v) for k, v in params.items() if v and str(v).strip()]
+    querystring = '&'.join([f'{k}={v}' for k, v in clean_params]) if clean_params else '' 
 
     context = {
         'page_obj': page_obj,

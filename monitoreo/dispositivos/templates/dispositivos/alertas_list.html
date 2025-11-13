@@ -49,7 +49,7 @@
     <div>
         <form method="get" class="d-inline">
             {% for key, value in request.GET.items %}
-                {% if key != 'size' and key != 'page' %}
+                {% if key != 'size' and key != 'page' and value %}
                 <input type="hidden" name="{{ key }}" value="{{ value }}">
                 {% endif %}
             {% endfor %}
