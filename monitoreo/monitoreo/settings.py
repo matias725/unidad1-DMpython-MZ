@@ -82,6 +82,8 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'dispositivos',
     'usuarios',
+    'rest_framework',
+    'api',
 ]
 
 MIDDLEWARE = [
